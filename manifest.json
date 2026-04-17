@@ -1,0 +1,23 @@
+{
+  "name": "Catálogo Virtual Matrezan 2026",
+  "short_name": "Matrezan",
+  "description": "Catálogo de móveis, acabamentos e orçamentos.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8f8f8",
+  "theme_color": "#8B5A2B",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

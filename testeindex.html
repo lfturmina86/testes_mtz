@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Virtual - MATREZAN</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8B5A2B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Matrezan">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { font-family: 'Lato', sans-serif; background-color: #f8f8f8; color: #333; }
+        h1, h2, h3, .serif-font { font-family: 'Playfair Display', serif; }
+        .wood-accent { color: #8B5A2B; }
+        .bg-wood { background-color: #8B5A2B; }
+        .text-wood { color: #8B5A2B; }
+        
+        .product-card { transition: all 0.3s ease; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-y: hidden; }
+
+        .nav-scroll::-webkit-scrollbar { height: 6px; }
+        .nav-scroll::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 10px; }
+        .nav-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .nav-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .table-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+        
+        .thumb-scroll::-webkit-scrollbar { height: 4px; }
+        .thumb-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #8B5A2B; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #toast { transition: opacity 0.3s, transform 0.3s; }
+        
+        select { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+        
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 -translate-y-10 opacity-0 pointer-events-none bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-[100] flex items-center text-sm font-medium">
+        <i class="fas fa-check-circle text-green-400 mr-2"></i> <span id="toastMsg">Sucesso!</span>
+    </div>
+
+    <div id="zoomLightbox" class="fixed inset-0 z-[70] hidden opacity-0 transition-opacity bg-black bg-opacity-90 flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeZoom()">
+        <button onclick="closeZoom()" class="absolute top-6 right-6 text-white hover:text-gray-300 text-4xl z-10 transition-colors">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="relative max-w-5xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
+            <div class="w-full bg-white p-6 rounded-xl shadow-2xl flex items-center justify-center min-h-[300px] mb-6 overflow-hidden">
+                <div id="zoomContent" class="w-full flex items-center justify-center max-h-[70vh] overflow-y-auto"></div>
+            </div>
+            <h3 id="zoomTitle" class="text-white text-2xl font-bold text-center tracking-wide uppercase"></h3>
+        </div>
+    </div>
+
+    <div id="cartOverlay" class="fixed inset-0 bg-black/50 z-[80] hidden backdrop-blur-sm transition-opacity opacity-0" onclick="toggleCart()"></div>
+    <div id="cartSidebar" class="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white shadow-2xl z-[90] transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 serif-font">Seu Orçamento</h2>
+                <p class="text-xs text-gray-500 uppercase tracking-widest mt-1" id="cartHeaderCount">0 Itens</p>
+            </div>
+            <button onclick="toggleCart()" class="text-gray-400 hover:text-gray-900 bg-white w-8 h-8 rounded-full border shadow-sm flex items-center justify-center transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div id="cartItems" class="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50/50">
+            </div>
+        
+        <div class="p-5 border-t border-gray-100 bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-500 font-bold uppercase tracking-wider text-sm">Valor Total</span>
+                <span class="text-2xl font-bold text-gray-900" id="cartTotal">R$ 0,00</span>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome do Cliente / Projeto</label>
+                <input type="text" id="clienteNome" placeholder="Ex: Projeto Residência Silva" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-wood focus:border-wood outline-none">
+            </div>
+            
+            <button onclick="gerarPDFOrcamento()" id="btnGerarOrcamento" class="w-full bg-wood hover:bg-[#724a23] text-white py-3.5 rounded-lg font-bold shadow-md transition-colors flex items-center justify-center">
+                <i class="fas fa-file-invoice-dollar mr-2 text-lg"></i> Finalizar & Gerar Orçamento
+            </button>
+        </div>
+    </div>
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold serif-font text-gray-800">
+                Coleção Matrezan<span class="wood-accent">.2026</span>
+            </div>
+            <div class="flex items-center gap-4 md:gap-6">
+                <a href="catalogo.pdf" target="_blank" class="hidden sm:flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                    <i class="fas fa-download mr-2"></i> Baixar Catálogo
+                </a>
+                <button onclick="toggleCart()" class="relative text-gray-600 hover:text-wood transition-colors flex items-center bg-gray-50 p-2 rounded-full border border-gray-100 shadow-sm">
+                    <i class="fas fa-shopping-cart text-lg mx-1"></i>
+                    <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center hidden shadow-sm border border-white">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="bg-gray-900 text-white py-12 md:py-16 px-4 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center"></div>
+        <div class="container mx-auto relative z-10 text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4">Catálogo Virtual - Matrezan</h1>
+            <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-light">
+                Design curvo e sofisticado para ambientes contemporâneos.
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-white border-b sticky top-[68px] z-40 shadow-sm">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                <nav id="categoryNav" class="flex space-x-3 overflow-x-auto nav-scroll w-full md:w-auto pb-2 md:pb-0 items-center">
+                    <button onclick="setCategory('all')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full bg-gray-900 text-white text-sm font-medium transition-colors" data-cat="all">TODOS</button>
+                    <button onclick="setCategory('mesas_jantar')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="mesas_jantar">MESAS DE JANTAR</button>
+                    <button onclick="setCategory('cadeiras_jantar')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="cadeiras_jantar">CADEIRAS DE JANTAR</button>
+                    <button onclick="setCategory('poltronas')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="poltronas">POLTRONAS</button>
+                    <button onclick="setCategory('mesas_bistro')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="mesas_bistro">MESAS BISTRÔ</button>
+                    <button onclick="setCategory('banquetas')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="banquetas">BANQUETAS</button>
+                    <button onclick="setCategory('mesas_centro_laterais')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="mesas_centro_laterais">MESAS DE CENTRO/LATERAIS</button>
+                    <button onclick="setCategory('consoles_aparadores')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="consoles_aparadores">CONSOLES/APARADORES</button>
+                    <button onclick="setCategory('bancos_puffs')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="bancos_puffs">BANCOS/PUFFS</button>
+                    <button onclick="setCategory('bares')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="bares">BARES</button>
+                    <button onclick="setCategory('mesas_apoio')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="mesas_apoio">MESAS DE APOIO</button>
+                    <button onclick="setCategory('balcoes_adega')" class="cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors" data-cat="balcoes_adega">BALCÕES/ADEGA</button>
+                </nav>
+
+                <div class="relative w-full md:w-80 flex-shrink-0">
+                    <input type="text" id="searchInput" placeholder="Buscar nome ou referência..." class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-full focus:ring-wood focus:border-wood block pl-10 p-2.5 outline-none transition-colors shadow-inner" />
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <button id="clearSearchBtn" class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 hidden" onclick="clearSearch()">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 py-8 mb-12 flex-grow">
+        <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[300px]">
+            <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
+                <div class="loader mb-4"></div>
+                <p>Sincronizando catálogo...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="productModal" class="fixed inset-0 z-50 hidden opacity-0 pointer-events-none modal">
+        <div class="absolute inset-0 bg-black bg-opacity-75 transition-opacity" onclick="closeModal()"></div>
+        <div class="flex items-center justify-center min-h-screen px-4 py-4">
+            <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto md:overflow-hidden relative z-10 transform transition-transform scale-95 flex flex-col md:flex-row">
+                
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 z-20 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow border border-gray-100">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <div class="bg-gray-50 md:w-5/12 p-5 md:p-6 flex flex-col items-center justify-start relative border-b md:border-b-0 md:border-r border-gray-100 min-h-[300px] md:overflow-y-auto flex-shrink-0">
+                    <div class="w-full aspect-square relative flex items-center justify-center bg-white rounded-lg shadow-sm overflow-hidden p-4 mb-4 mt-8 md:mt-0">
+                        <img id="modalImg" src="" alt="Produto" class="w-full h-full object-contain mix-blend-multiply transition-opacity duration-300 cursor-zoom-in" onclick="openZoom(this.src, document.getElementById('modalTitle').innerText)">
+                        <video id="modalVideo" class="hidden w-full h-full object-contain" controls loop playsinline></video>
+                        <span id="modalRefTag" class="hidden absolute bottom-4 left-4 bg-white px-3 py-1 text-xs font-bold shadow rounded border border-gray-100 text-gray-800"></span>
+                    </div>
+                    <div id="modalThumbnails" class="flex gap-3 overflow-x-auto w-full justify-start md:justify-center min-h-[70px] py-2 px-1 thumb-scroll"></div>
+                </div>
+
+                <div class="md:w-7/12 flex flex-col md:max-h-[90vh] flex-shrink-0">
+                    <div class="p-6 pt-10 md:p-8 md:pt-12 pb-4 border-b border-gray-100 flex-shrink-0 relative">
+                        <div class="flex justify-between items-start gap-4">
+                            <div class="flex-1 pr-4">
+                                <div class="mb-1">
+                                    <span id="modalCategory" class="text-xs font-bold tracking-widest text-wood uppercase"></span>
+                                </div>
+                                <h2 id="modalTitle" class="text-3xl font-bold mb-2 serif-font text-gray-900"></h2>
+                            </div>
+                            
+                            <button onclick="shareActiveProduct()" class="flex-shrink-0 text-gray-500 hover:text-wood transition-all w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 shadow-sm" title="Compartilhar este produto">
+                                <i class="fas fa-share-nodes text-lg"></i>
+                            </button>
+                        </div>
+                        <p id="modalDesc" class="text-gray-500 text-sm leading-relaxed mt-2"></p>
+                    </div>
+
+                    <div class="p-6 md:p-8 pt-4 overflow-visible md:overflow-y-auto table-scroll flex-grow">
+                        <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Tamanhos e Referências</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-gray-600 border-collapse min-w-[400px]">
+                                <thead>
+                                    <tr class="border-b-2 border-gray-200 text-gray-900" id="tableReferencesHead">
+                                        <th class="pb-2 font-semibold pl-2">Ref.</th>
+                                        <th class="pb-2 font-semibold">Dimensões</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableReferencesBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-gray-50 border-t border-gray-100 flex-shrink-0">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <button onclick="openTechModalTab('acabamentos')" class="w-full bg-white border-2 border-gray-900 text-gray-900 py-2.5 rounded hover:bg-gray-900 hover:text-white transition font-medium text-sm text-center">
+                                <i class="fas fa-palette mr-1.5"></i> Opções & Valores
+                            </button>
+                            <button onclick="openTechModalTab('dimensoes')" class="w-full bg-white border-2 border-gray-900 text-gray-900 py-2.5 rounded hover:bg-gray-900 hover:text-white transition font-medium text-sm text-center">
+                                <i class="fas fa-ruler-combined mr-1.5"></i> Dimensões
+                            </button>
+                            <button onclick="openTechModalTab('logistica')" class="w-full bg-white border-2 border-gray-900 text-gray-900 py-2.5 rounded hover:bg-gray-900 hover:text-white transition font-medium text-sm text-center">
+                                <i class="fas fa-box-open mr-1.5"></i> Info. Técnicas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="techModal" class="fixed inset-0 z-[60] hidden opacity-0 pointer-events-none modal">
+        <div class="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm transition-opacity" onclick="closeTechModal()"></div>
+        <div class="flex items-center justify-center min-h-screen px-4 py-4">
+            <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col relative z-10 transform transition-transform scale-95">
+                
+                <div class="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-lg flex-shrink-0">
+                    <div>
+                        <p class="text-xs font-bold tracking-widest text-wood uppercase mb-1">Detalhes e Especificações</p>
+                        <h3 class="text-xl md:text-2xl font-bold serif-font text-gray-900" id="techTitle">Nome da Linha</h3>
+                    </div>
+                    <button onclick="closeTechModal()" class="text-gray-400 hover:text-gray-900 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm border border-gray-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="border-b border-gray-200 flex px-6 overflow-x-auto nav-scroll flex-shrink-0">
+                    <button data-tab="acabamentos" onclick="switchTechTab('acabamentos')" class="tech-tab-btn px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors">Configurar Produto</button>
+                    <button data-tab="dimensoes" onclick="switchTechTab('dimensoes')" class="tech-tab-btn px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors">Dimensões e Croqui</button>
+                    <button data-tab="logistica" onclick="switchTechTab('logistica')" class="tech-tab-btn px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors">Logística e Documentação</button>
+                </div>
+
+                <div class="p-5 md:p-8 overflow-y-auto table-scroll flex-grow relative">
+                    
+                    <div id="tab-acabamentos" class="tech-tab-content hidden pb-24">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b border-gray-100">
+                            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 sm:mb-0">Configure sua Peça</h4>
+                            <div class="flex items-center gap-3">
+                                <label for="acabamentosRefSelect" class="text-xs font-bold text-gray-500 uppercase">Referência:</label>
+                                <select id="acabamentosRefSelect" onchange="mudarRefAcabamento(this.value)" class="text-sm border border-gray-300 rounded-md shadow-sm focus:ring-wood focus:border-wood text-gray-800 font-medium py-2 pl-3 pr-8 bg-white cursor-pointer outline-none">
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="moodboardArea" class="hidden mb-6 bg-white p-4 sm:p-5 rounded-xl border border-wood shadow-sm flex-col sm:flex-row items-center sm:items-start gap-4 relative overflow-hidden transition-all duration-300">
+                            <div class="absolute top-0 left-0 w-1.5 h-full bg-wood"></div>
+                            <div class="flex-shrink-0 flex flex-col items-center sm:items-start w-full sm:w-auto">
+                                <p class="text-[10px] font-bold text-wood uppercase tracking-wider mb-3 text-center sm:text-left w-full"><i class="fas fa-layer-group mr-1"></i> Combinação Atual</p>
+                                <div id="moodboardVisual" class="flex -space-x-4 sm:-space-x-6 justify-center sm:justify-start w-full cursor-zoom-in hover:opacity-90 transition-opacity" onclick="openMoodboardZoom()" title="Clique para ampliar a combinação">
+                                </div>
+                            </div>
+                            <div class="flex-1 w-full text-center sm:text-left flex flex-col justify-center min-h-[60px]">
+                                <ul id="moodboardText" class="text-xs text-gray-700 space-y-1.5"></ul>
+                            </div>
+                            <div class="flex-shrink-0 mt-2 sm:mt-0 self-center">
+                                <button onclick="limparCombinacao()" class="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors flex items-center justify-center px-3 py-2 bg-gray-50 hover:bg-red-50 rounded-lg">
+                                    <i class="fas fa-trash-alt mr-1.5"></i> Refazer
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="techAcabamentos" class="bg-white rounded-lg border border-gray-100 p-5 min-h-[150px]"></div>
+                        
+                        <div id="cartActionContainer" class="hidden absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] rounded-b-lg flex flex-col sm:flex-row justify-between items-center z-10">
+                            <div class="mb-3 sm:mb-0 text-center sm:text-left">
+                                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Valor Estimado</p>
+                                <p id="precoEstimadoDisplay" class="text-2xl font-bold text-gray-900 serif-font">R$ 0,00</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                                    <button onclick="mudarQtdItemCart(-1)" class="w-10 h-10 flex justify-center items-center text-gray-600 hover:bg-gray-100 transition-colors">-</button>
+                                    <input type="number" id="inputQtdCart" value="1" min="1" class="w-12 h-10 text-center text-sm font-bold text-gray-800 border-x border-gray-200 outline-none" readonly>
+                                    <button onclick="mudarQtdItemCart(1)" class="w-10 h-10 flex justify-center items-center text-gray-600 hover:bg-gray-100 transition-colors">+</button>
+                                </div>
+                                <button onclick="adicionarAoOrcamento()" class="bg-wood hover:bg-[#724a23] text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-colors flex items-center">
+                                    <i class="fas fa-cart-plus mr-2"></i> Adicionar
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div id="tab-dimensoes" class="tech-tab-content hidden">
+                        <div class="flex flex-col lg:flex-row gap-8 w-full justify-center">
+                            <div id="techImageContainer" class="lg:w-1/3 p-4 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 min-h-[250px] transition-all duration-300">
+                                <img id="techDimImg" src="" onerror="this.src='https://placehold.co/400x300/f3f4f6/8B5A2B?text=Sem+Croqui'" alt="Croqui" class="w-full h-full object-contain mix-blend-multiply cursor-zoom-in" onclick="openZoom(this.src, 'Croqui de Dimensões')">
+                            </div>
+                            <div id="techMatrixContainer" class="lg:w-2/3 overflow-x-auto transition-all duration-300">
+                                <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Matriz de Medidas</h4>
+                                <table class="w-full text-left text-sm text-gray-600 border-collapse min-w-[500px]">
+                                    <thead><tr id="techMatrixHead" class="border-b-2 border-gray-200 text-gray-900 bg-gray-50"></tr></thead>
+                                    <tbody id="techMatrixBody" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-logistica" class="tech-tab-content hidden">
+                        <div class="mb-8">
+                            <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Pesos, Volumes e Arquivos por Referência</h4>
+                            <div class="overflow-x-auto border border-gray-100 rounded-lg">
+                                <table class="w-full text-left text-sm text-gray-600 border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr class="border-b-2 border-gray-200 text-gray-900 bg-gray-50">
+                                            <th class="py-3 pl-4 font-semibold rounded-tl-lg">Ref.</th>
+                                            <th class="py-3 font-semibold text-center">Peso Líq.</th>
+                                            <th class="py-3 font-semibold text-center">Peso Bruto</th>
+                                            <th class="py-3 font-semibold text-center">Cubagem</th>
+                                            <th class="py-3 font-semibold text-center">Volumes</th>
+                                            <th class="py-3 font-semibold text-center" title="Manual de Montagem">Manual</th>
+                                            <th class="py-3 font-semibold text-center pr-4 rounded-tr-lg" title="Bloco 3D">3D</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="techTechTableBody" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="techAdditionalInfoContainer" class="hidden mb-8 border-t border-gray-200 pt-6">
+                            <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Detalhes Adicionais</h4>
+                            <div id="techAdditionalInfoText" class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-5 rounded-lg border border-gray-100 whitespace-pre-wrap">
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-6">
+                            <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Apresentação</h4>
+                            <button onclick="window.gerarPDF(event)" id="btnGerarPDF" class="flex flex-col items-center justify-center w-full p-6 rounded-lg border border-gray-200 bg-gray-50 hover:border-wood hover:bg-white transition-colors group max-w-sm mx-auto">
+                                <i class="fas fa-file-invoice text-3xl text-gray-400 group-hover:text-wood mb-3 transition-colors"></i>
+                                <span class="font-bold text-gray-800 group-hover:text-wood transition-colors">Gerar Ficha Técnica (PDF)</span>
+                                <span class="text-xs text-gray-500 mt-1 text-center">Baixe um documento consolidado com fotos, medidas e pesos para enviar ao cliente.</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. UTILITÁRIOS GLOBAIS E ERROS
+        // ==========================================
+        window.onerror = function(msg, url, line) {
+            const grid = document.getElementById('productGrid');
+            if (grid) {
+                grid.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-20 text-red-500">
+                    <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
+                    <p class="text-lg font-bold">Erro no Script</p>
+                    <p class="text-sm mt-2">${msg} (Linha ${line})</p>
+                    <button onclick="localStorage.removeItem('carrinhoMatrezan'); window.location.reload();" class="mt-6 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors">Limpar Memória e Recarregar</button>
+                </div>`;
+            }
+        };
+
+        window.showToast = function(msg = "Link copiado com sucesso!") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            if (toastMsg) toastMsg.innerText = msg;
+            if (toast) {
+                toast.classList.remove('opacity-0', '-translate-y-10');
+                toast.classList.add('opacity-100', 'translate-y-0');
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', '-translate-y-10');
+                }, 3000);
+            }
+        };
+
+        window.formatarMoeda = function(valor) {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        };
+
+        window.openZoom = function(imgSrc, title) {
+            const contentDiv = document.getElementById('zoomContent');
+            const titleDiv = document.getElementById('zoomTitle');
+            const lb = document.getElementById('zoomLightbox');
+            if(contentDiv) contentDiv.innerHTML = `<img src="${imgSrc}" class="max-w-full max-h-[70vh] object-contain rounded shadow-lg">`;
+            if(titleDiv) titleDiv.innerText = title;
+            if(lb) {
+                lb.classList.remove('hidden');
+                setTimeout(() => lb.classList.remove('opacity-0'), 10);
+            }
+        };
+
+        window.closeZoom = function() {
+            const lb = document.getElementById('zoomLightbox');
+            if(lb) {
+                lb.classList.add('opacity-0');
+                setTimeout(() => lb.classList.add('hidden'), 300);
+            }
+        };
+
+        // ==========================================
+        // 2. VARIÁVEIS GLOBAIS E ESTADO
+        // ==========================================
+        const API_URL = "https://script.google.com/macros/s/AKfycbzFZM_XLzc2fs32dvbvCmU_bW0REfNrU2FqBXLVe24hDJ0CVbZb_5njGEuRUa3KA0fCnQ/exec"; 
+        
+        let db_linhas = [];
+        let db_referencias = [];
+        let db_medidas = []; 
+        let db_opcoes_produto = [];
+        let db_acabamentos = []; 
+        
+        let linhaAtiva = null;
+        let currentCategory = 'all';
+        let combinacaoAtual = {}; 
+        let categoriasObrigatoriasParaRef = []; 
+        let carrinhoOrcamento = [];
+        
+        try {
+            const savedCart = localStorage.getItem('carrinhoMatrezan');
+            if (savedCart) {
+                carrinhoOrcamento = JSON.parse(savedCart);
+                if (!Array.isArray(carrinhoOrcamento)) carrinhoOrcamento = [];
+            }
+        } catch (e) {
+            localStorage.removeItem('carrinhoMatrezan');
+            carrinhoOrcamento = [];
+        }
+
+        // ==========================================
+        // 3. INICIALIZAÇÃO DA API
+        // ==========================================
+        async function carregarCatalogo() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("Falha na comunicação com a planilha");
+                
+                const data = await response.json();
+                db_linhas = data.linhas || [];
+                db_referencias = data.referencias || [];
+                db_medidas = data.medidas || []; 
+                db_opcoes_produto = data.opcoes_produto || [];
+                db_acabamentos = data.acabamentos || [];
+                
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        const clearBtn = document.getElementById('clearSearchBtn');
+                        if(clearBtn) {
+                            if(this.value.length > 0) clearBtn.classList.remove('hidden');
+                            else clearBtn.classList.add('hidden');
+                        }
+                        window.applyFilters();
+                    });
+                }
+
+                window.applyFilters(); 
+                window.atualizarBadgeCarrinho();
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const produtoId = urlParams.get('p');
+                if(produtoId && db_linhas.find(l => String(l.ID_LINHA) === String(produtoId))) {
+                    window.openModal(produtoId);
+                }
+            } catch (error) {
+                console.error("Erro:", error);
+                const grid = document.getElementById('productGrid');
+                if (grid) {
+                    grid.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-red-500">
+                        <i class="fas fa-wifi text-5xl mb-4 opacity-50"></i>
+                        <p class="text-lg font-bold">Erro de Conexão</p>
+                        <p class="text-sm mt-2">${error.message}</p>
+                        <button onclick="window.location.reload();" class="mt-6 px-4 py-2 bg-gray-900 text-white rounded-lg">Tentar Novamente</button>
+                    </div>`;
+                }
+            }
+        }
+
+        // ==========================================
+        // 4. CARRINHO DE ORÇAMENTOS
+        // ==========================================
+        window.toggleCart = function() {
+            const sidebar = document.getElementById('cartSidebar');
+            const overlay = document.getElementById('cartOverlay');
+            
+            if (sidebar && sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                if(overlay) {
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                }
+                window.renderizarItensCarrinho();
+            } else if(sidebar) {
+                sidebar.classList.add('translate-x-full');
+                if(overlay) {
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                }
+            }
+        };
+
+        window.atualizarBadgeCarrinho = function() {
+            const badge = document.getElementById('cartBadge');
+            if(!badge) return;
+            const totalItens = carrinhoOrcamento.reduce((sum, item) => sum + item.quantidade, 0);
+            if (totalItens > 0) {
+                badge.innerText = totalItens;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        };
+
+        window.mudarQtdItemCart = function(delta) {
+            const input = document.getElementById('inputQtdCart');
+            if(!input) return;
+            let val = parseInt(input.value) + delta;
+            if (val < 1) val = 1;
+            input.value = val;
+            window.calcularPrecoAtual(); 
+        };
+
+        window.calcularPrecoFinalItem = function(refId, combo) {
+            const refData = db_referencias.find(r => String(r.REFERENCIA) === String(refId));
+            let precoBase = 0;
+            if (refData && refData.PRECO_BASE && !isNaN(parseFloat(refData.PRECO_BASE))) {
+                precoBase = parseFloat(refData.PRECO_BASE);
+            }
+
+            let acrescimoTotalPerc = 0;
+            Object.values(combo).forEach(item => {
+                const infoAcab = db_acabamentos.find(a => a.NOME === item.nome);
+                if (infoAcab && infoAcab.ACRESCIMO_PERC && !isNaN(parseFloat(infoAcab.ACRESCIMO_PERC))) {
+                    acrescimoTotalPerc += parseFloat(infoAcab.ACRESCIMO_PERC);
+                }
+            });
+
+            return precoBase * (1 + (acrescimoTotalPerc / 100));
+        };
+
+        window.calcularPrecoAtual = function() {
+            const refSelect = document.getElementById('acabamentosRefSelect');
+            const inputQtdCart = document.getElementById('inputQtdCart');
+            const precoEstimadoDisplay = document.getElementById('precoEstimadoDisplay');
+            
+            if(!refSelect || !inputQtdCart || !precoEstimadoDisplay) return;
+            
+            const refId = refSelect.value;
+            const qtd = parseInt(inputQtdCart.value) || 1;
+            
+            const precoUnitario = window.calcularPrecoFinalItem(refId, combinacaoAtual);
+            const precoTotal = precoUnitario * qtd;
+            
+            precoEstimadoDisplay.innerText = window.formatarMoeda(precoTotal);
+        };
+
+        window.adicionarAoOrcamento = function() {
+            const refSelect = document.getElementById('acabamentosRefSelect');
+            const inputQtdCart = document.getElementById('inputQtdCart');
+            if(!refSelect || !inputQtdCart || !linhaAtiva) return;
+
+            const refId = refSelect.value;
+            const qtd = parseInt(inputQtdCart.value) || 1;
+            const precoUnitario = window.calcularPrecoFinalItem(refId, combinacaoAtual);
+            
+            const combinacaoSalva = JSON.parse(JSON.stringify(combinacaoAtual));
+            
+            const novoItem = {
+                id: Date.now(),
+                linhaId: linhaAtiva.ID_LINHA,
+                linhaNome: linhaAtiva.NOME_LINHA,
+                imagemPrincipal: linhaAtiva.IMAGEM_BASE,
+                referencia: refId,
+                combinacao: combinacaoSalva,
+                quantidade: qtd,
+                precoUnitario: precoUnitario
+            };
+
+            carrinhoOrcamento.push(novoItem);
+            localStorage.setItem('carrinhoMatrezan', JSON.stringify(carrinhoOrcamento));
+            
+            window.atualizarBadgeCarrinho();
+            window.showToast("Item adicionado ao Orçamento!");
+            window.closeTechModal();
+        };
+
+        window.renderizarItensCarrinho = function() {
+            const container = document.getElementById('cartItems');
+            const headerCount = document.getElementById('cartHeaderCount');
+            const totalDisplay = document.getElementById('cartTotal');
+            const btnGerar = document.getElementById('btnGerarOrcamento');
+            
+            if(!container || !headerCount || !totalDisplay || !btnGerar) return;
+
+            container.innerHTML = '';
+            
+            if (carrinhoOrcamento.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <i class="fas fa-shopping-cart text-4xl mb-3 opacity-50"></i>
+                        <p>Seu orçamento está vazio.</p>
+                    </div>`;
+                headerCount.innerText = "0 Itens";
+                totalDisplay.innerText = window.formatarMoeda(0);
+                btnGerar.disabled = true;
+                btnGerar.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            btnGerar.disabled = false;
+            btnGerar.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            let totalGeral = 0;
+            let qtdTotalItens = 0;
+
+            carrinhoOrcamento.forEach((item, index) => {
+                const totalItem = item.quantidade * item.precoUnitario;
+                totalGeral += totalItem;
+                qtdTotalItens += item.quantidade;
+
+                let comboHTML = '';
+                Object.keys(item.combinacao).forEach(cat => {
+                    comboHTML += `<p class="text-[10px] text-gray-500"><strong class="text-gray-700">${cat}:</strong> ${item.combinacao[cat].nome}</p>`;
+                });
+
+                const cartRow = document.createElement('div');
+                cartRow.className = "bg-white p-3 rounded-lg border border-gray-100 shadow-sm flex gap-3 relative";
+                
+                cartRow.innerHTML = `
+                    <button onclick="window.removerItemCarrinho(${index})" class="absolute -top-2 -right-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors shadow-sm">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="w-20 h-20 bg-gray-50 rounded border flex-shrink-0 p-1 flex items-center justify-center">
+                        <img src="${item.imagemPrincipal}" class="max-w-full max-h-full object-contain mix-blend-multiply">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900 serif-font leading-tight">${item.linhaNome}</h4>
+                            <p class="text-xs font-bold text-wood mb-1">Ref: ${item.referencia}</p>
+                            ${comboHTML}
+                        </div>
+                        <div class="flex justify-between items-end mt-2">
+                            <div class="flex items-center border border-gray-200 rounded overflow-hidden">
+                                <button onclick="window.alterarQtdCarrinho(${index}, -1)" class="w-6 h-6 bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-bold">-</button>
+                                <span class="w-8 text-center text-xs font-bold">${item.quantidade}</span>
+                                <button onclick="window.alterarQtdCarrinho(${index}, 1)" class="w-6 h-6 bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-bold">+</button>
+                            </div>
+                            <span class="text-sm font-bold text-gray-900">${window.formatarMoeda(totalItem)}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(cartRow);
+            });
+
+            headerCount.innerText = `${qtdTotalItens} Iten${qtdTotalItens > 1 ? 's' : ''}`;
+            totalDisplay.innerText = window.formatarMoeda(totalGeral);
+        };
+
+        window.alterarQtdCarrinho = function(index, delta) {
+            let val = carrinhoOrcamento[index].quantidade + delta;
+            if (val < 1) val = 1;
+            carrinhoOrcamento[index].quantidade = val;
+            localStorage.setItem('carrinhoMatrezan', JSON.stringify(carrinhoOrcamento));
+            window.renderizarItensCarrinho();
+            window.atualizarBadgeCarrinho();
+        };
+
+        window.removerItemCarrinho = function(index) {
+            carrinhoOrcamento.splice(index, 1);
+            localStorage.setItem('carrinhoMatrezan', JSON.stringify(carrinhoOrcamento));
+            window.renderizarItensCarrinho();
+            window.atualizarBadgeCarrinho();
+        };
+
+        // ==========================================
+        // 5. NAVEGAÇÃO E FILTROS
+        // ==========================================
+        window.setCategory = function(category) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = btn.dataset.cat === category 
+                    ? "cat-btn whitespace-nowrap px-5 py-2 rounded-full bg-gray-900 text-white text-sm font-medium transition-colors"
+                    : "cat-btn whitespace-nowrap px-5 py-2 rounded-full border border-gray-300 hover:border-gray-900 text-gray-700 text-sm font-medium transition-colors";
+            });
+            window.applyFilters();
+        };
+
+        window.clearSearch = function() {
+            const searchInput = document.getElementById('searchInput');
+            if(searchInput) searchInput.value = '';
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if(clearBtn) clearBtn.classList.add('hidden');
+            window.applyFilters();
+        };
+
+        window.applyFilters = function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const grid = document.getElementById('productGrid');
+            if(!grid) return;
+            
+            grid.innerHTML = '';
+            let filtered = db_linhas;
+
+            if(currentCategory !== 'all') {
+                filtered = filtered.filter(p => p.CATEGORIA === currentCategory);
+            }
+
+            if(searchTerm !== '') {
+                filtered = filtered.filter(linha => {
+                    const matchName = linha.NOME_LINHA && linha.NOME_LINHA.toLowerCase().includes(searchTerm);
+                    const refsDaLinha = db_referencias.filter(r => String(r.ID_LINHA) === String(linha.ID_LINHA));
+                    const matchRef = refsDaLinha.some(r => String(r.REFERENCIA).toLowerCase().includes(searchTerm));
+                    return matchName || matchRef;
+                });
+            }
+
+            if(filtered.length === 0) { 
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-20 flex flex-col items-center">
+                        <i class="fas fa-search text-5xl text-gray-200 mb-4"></i>
+                        <p class="text-gray-500 text-lg">Nenhum produto encontrado para "${searchTerm}".</p>
+                        <button onclick="window.clearSearch()" class="mt-4 text-wood font-bold hover:underline">Limpar busca</button>
+                    </div>`; 
+                return; 
+            }
+
+            filtered.forEach(linha => {
+                const safeCat = (linha.CATEGORIA || 'all').replace(/"/g, '\\"');
+                const btnCat = document.querySelector(`.cat-btn[data-cat="${safeCat}"]`);
+                const catName = btnCat ? btnCat.innerText : linha.CATEGORIA;
+                
+                const card = document.createElement('div');
+                card.className = 'product-card bg-white rounded-lg border border-gray-100 overflow-hidden cursor-pointer group flex flex-col relative';
+                card.onclick = () => window.openModal(linha.ID_LINHA);
+                
+                const safeNome = (linha.NOME_LINHA || '').replace(/'/g, "\\'");
+                card.innerHTML = `
+                    <div class="h-56 overflow-hidden relative bg-gray-50 flex items-center justify-center p-4 border-b border-gray-100">
+                        <img src="${linha.IMAGEM_BASE}" onerror="this.src='https://placehold.co/600x400/f3f4f6/8B5A2B?text=Sem+Foto'" alt="${linha.NOME_LINHA}" class="w-full h-full object-contain mix-blend-multiply transition duration-500 group-hover:scale-105">
+                        <button onclick="window.shareProductCard(event, '${safeNome}', '${linha.ID_LINHA}')" class="absolute top-3 right-3 bg-white/90 backdrop-blur w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-wood hover:shadow transition-all z-10" title="Compartilhar">
+                            <i class="fas fa-share-nodes"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <p class="text-[10px] text-wood font-bold uppercase tracking-wider mb-2">${catName}</p>
+                        <h3 class="text-xl font-bold text-gray-800 leading-tight mb-2 serif-font">${linha.NOME_LINHA}</h3>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        };
+
+        window.shareProductCard = function(event, nome, id) {
+            event.stopPropagation(); 
+            const baseUrl = window.location.href.split('?')[0];
+            const shareUrl = `${baseUrl}?p=${id}`;
+            const shareText = `Confira a linha ${nome} no Catálogo Matrezan 2026: `;
+            if (navigator.share) navigator.share({ title: `Matrezan - ${nome}`, text: shareText, url: shareUrl }).catch(console.error);
+            else navigator.clipboard.writeText(shareText + shareUrl).then(() => window.showToast("Link copiado com sucesso!"));
+        };
+
+        window.shareActiveProduct = function() {
+            if(!linhaAtiva) return;
+            const baseUrl = window.location.href.split('?')[0];
+            const shareUrl = `${baseUrl}?p=${linhaAtiva.ID_LINHA}`;
+            const shareText = `Confira a linha ${linhaAtiva.NOME_LINHA} no Catálogo Matrezan 2026: `;
+            if (navigator.share) navigator.share({ title: `Matrezan - ${linhaAtiva.NOME_LINHA}`, text: shareText, url: shareUrl }).catch(console.error);
+            else navigator.clipboard.writeText(shareText + shareUrl).then(() => window.showToast("Link copiado com sucesso!"));
+        };
+
+        // ==========================================
+        // 6. MODAL PRINCIPAL E GALERIA
+        // ==========================================
+        window.openModal = function(id_linha) {
+            linhaAtiva = db_linhas.find(l => String(l.ID_LINHA) === String(id_linha));
+            if(!linhaAtiva) return;
+
+            combinacaoAtual = {}; 
+            const inputQtd = document.getElementById('inputQtdCart');
+            if(inputQtd) inputQtd.value = 1;
+            window.atualizarMoodboard();
+
+            const baseUrl = window.location.href.split('?')[0];
+            window.history.pushState({}, '', `${baseUrl}?p=${id_linha}`);
+
+            const titleEl = document.getElementById('modalTitle');
+            if(titleEl) titleEl.innerText = linhaAtiva.NOME_LINHA;
+            
+            const descEl = document.getElementById('modalDesc');
+            if(descEl) descEl.innerText = linhaAtiva.DESCRICAO_LINHA;
+            
+            const mainImg = document.getElementById('modalImg');
+            const mainVideo = document.getElementById('modalVideo');
+            const refTag = document.getElementById('modalRefTag');
+            
+            if(mainImg) {
+                mainImg.classList.remove('hidden');
+                mainImg.onerror = function() { this.src = 'https://placehold.co/600x400/f3f4f6/8B5A2B?text=Imagem+Indisponível'; };
+                mainImg.src = linhaAtiva.IMAGEM_BASE;
+            }
+            if(mainVideo) {
+                mainVideo.classList.add('hidden');
+                mainVideo.pause();
+            }
+            if(refTag) refTag.classList.add('hidden');
+
+            const thumbContainer = document.getElementById('modalThumbnails');
+            let galeriaArr = [];
+            if(linhaAtiva.IMAGEM_BASE) galeriaArr.push(linhaAtiva.IMAGEM_BASE);
+            if(linhaAtiva.GALERIA_IMAGENS) {
+                const extras = linhaAtiva.GALERIA_IMAGENS.split('|').map(u => u.trim()).filter(u => u !== '');
+                galeriaArr = [...galeriaArr, ...extras];
+            }
+            galeriaArr = [...new Set(galeriaArr)]; 
+
+            if(thumbContainer) {
+                thumbContainer.innerHTML = '';
+                galeriaArr.forEach((imgUrl, index) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgUrl;
+                    thumb.className = "w-16 h-16 object-cover rounded cursor-pointer border-2 transition-all bg-white flex-shrink-0";
+                    thumb.onerror = function() { this.style.display = 'none'; };
+                    if(index === 0) thumb.classList.add('border-gray-900', 'opacity-100');
+                    else thumb.classList.add('border-transparent', 'hover:border-gray-400', 'opacity-75');
+
+                    thumb.onclick = () => {
+                        if(mainVideo) { mainVideo.classList.add('hidden'); mainVideo.pause(); }
+                        if(mainImg) { mainImg.classList.remove('hidden'); mainImg.src = imgUrl; }
+                        if(refTag) refTag.classList.add('hidden'); 
+                        Array.from(thumbContainer.children).forEach(c => {
+                            c.classList.remove('border-gray-900', 'opacity-100');
+                            c.classList.add('border-transparent', 'opacity-75');
+                        });
+                        thumb.classList.remove('border-transparent', 'opacity-75');
+                        thumb.classList.add('border-gray-900', 'opacity-100');
+                    };
+                    thumbContainer.appendChild(thumb);
+                });
+
+                if(linhaAtiva.VIDEO_URL && linhaAtiva.VIDEO_URL.trim() !== '') {
+                    const vidThumb = document.createElement('div');
+                    vidThumb.className = "w-16 h-16 flex items-center justify-center bg-gray-100 rounded cursor-pointer border-2 transition-all text-wood opacity-75 border-transparent hover:border-gray-400 flex-shrink-0";
+                    vidThumb.innerHTML = '<i class="fas fa-play text-xl"></i>';
+                    vidThumb.onclick = () => {
+                        if(mainImg) mainImg.classList.add('hidden');
+                        if(refTag) refTag.classList.add('hidden');
+                        if(mainVideo) {
+                            mainVideo.classList.remove('hidden');
+                            if(!mainVideo.src.includes(linhaAtiva.VIDEO_URL)) mainVideo.src = linhaAtiva.VIDEO_URL;
+                            mainVideo.play();
+                        }
+                        Array.from(thumbContainer.children).forEach(c => {
+                            c.classList.remove('border-gray-900', 'opacity-100');
+                            c.classList.add('border-transparent', 'opacity-75');
+                        });
+                        vidThumb.classList.remove('border-transparent', 'opacity-75');
+                        vidThumb.classList.add('border-gray-900', 'opacity-100');
+                    };
+                    thumbContainer.appendChild(vidThumb);
+                }
+            }
+
+            const tbody = document.getElementById('tableReferencesBody');
+            const theadTr = document.getElementById('tableReferencesHead');
+            
+            if(tbody && theadTr) {
+                tbody.innerHTML = '';
+                const refs = db_referencias.filter(r => String(r.ID_LINHA) === String(id_linha));
+                const temFormato = refs.some(ref => ref.FORMATO && String(ref.FORMATO).trim() !== '' && String(ref.FORMATO).trim().toLowerCase() !== '(vazio)');
+                
+                theadTr.innerHTML = `
+                    <th class="pb-2 font-semibold pl-2">Ref.</th>
+                    <th class="pb-2 font-semibold">Dimensões</th>
+                    ${temFormato ? '<th class="pb-2 font-semibold">Formato</th>' : ''}
+                `;
+                
+                refs.forEach(ref => {
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-100 cursor-default hover:bg-gray-50 transition-colors";
+                    tr.onmouseenter = () => { 
+                        if(ref.IMAGEM_REF && ref.IMAGEM_REF.trim() !== '') {
+                            if(mainVideo) { mainVideo.classList.add('hidden'); mainVideo.pause(); }
+                            if(mainImg) { mainImg.classList.remove('hidden'); mainImg.src = ref.IMAGEM_REF; }
+                            if(refTag) { refTag.innerText = `Ref. ${ref.REFERENCIA}`; refTag.classList.remove('hidden'); }
+                            if(thumbContainer) {
+                                Array.from(thumbContainer.children).forEach(c => {
+                                    c.classList.remove('border-gray-900', 'opacity-100');
+                                    c.classList.add('border-transparent', 'opacity-75');
+                                });
+                            }
+                        }
+                    };
+                    
+                    tr.onmouseleave = () => { 
+                        if(refTag) refTag.classList.add('hidden');
+                        if(galeriaArr.length > 0 && mainImg) {
+                            mainImg.src = galeriaArr[0];
+                            if(thumbContainer && thumbContainer.children.length > 0) {
+                                thumbContainer.children[0].classList.add('border-gray-900', 'opacity-100');
+                                thumbContainer.children[0].classList.remove('border-transparent', 'opacity-75');
+                            }
+                        }
+                    };
+                    
+                    tr.innerHTML = `
+                        <td class="py-3 pl-2 font-medium text-gray-900">${ref.REFERENCIA || '-'}</td>
+                        <td class="py-3 text-gray-700">${ref.DIMENSAO || '-'}</td>
+                        ${temFormato ? `<td class="py-3 text-gray-700">${ref.FORMATO || '-'}</td>` : ''}
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            const modal = document.getElementById('productModal');
+            if(modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => { modal.classList.remove('opacity-0', 'pointer-events-none'); document.body.classList.add('modal-active'); }, 10);
+            }
+        };
+
+        window.closeModal = function() {
+            const modal = document.getElementById('productModal');
+            const mainVideo = document.getElementById('modalVideo');
+            if(mainVideo) mainVideo.pause(); 
+            
+            if(modal) {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+            
+            document.body.classList.remove('modal-active');
+            const baseUrl = window.location.href.split('?')[0];
+            window.history.pushState({}, '', baseUrl);
+        };
+
+        window.switchTechTab = function(tabId) {
+            document.querySelectorAll('.tech-tab-content').forEach(el => el.classList.add('hidden'));
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if(targetTab) targetTab.classList.remove('hidden');
+            
+            document.querySelectorAll('.tech-tab-btn').forEach(btn => {
+                if(btn.dataset.tab === tabId) {
+                    btn.classList.add('border-gray-900', 'text-gray-900');
+                    btn.classList.remove('border-transparent', 'text-gray-400');
+                } else {
+                    btn.classList.remove('border-gray-900', 'text-gray-900');
+                    btn.classList.add('border-transparent', 'text-gray-400');
+                }
+            });
+        };
+
+        // ==========================================
+        // 7. FUNIL DE ACABAMENTOS
+        // ==========================================
+        window.verificarPassosCompletos = function() {
+            const btnCart = document.getElementById('cartActionContainer');
+            if(!btnCart) return;
+
+            const preenchidos = Object.keys(combinacaoAtual).length;
+            const exigidos = categoriasObrigatoriasParaRef.length;
+
+            if(preenchidos === exigidos && exigidos > 0) {
+                window.calcularPrecoAtual();
+                btnCart.classList.remove('hidden');
+                btnCart.classList.add('flex');
+                
+                setTimeout(() => {
+                    const el = document.getElementById('tab-acabamentos');
+                    if(el) el.scrollTop = el.scrollHeight;
+                }, 100);
+            } else {
+                btnCart.classList.add('hidden');
+                btnCart.classList.remove('flex');
+            }
+        };
+
+        window.atualizarMoodboard = function() {
+            const moodboardArea = document.getElementById('moodboardArea');
+            const moodboardVisual = document.getElementById('moodboardVisual');
+            const moodboardText = document.getElementById('moodboardText');
+            
+            if(!moodboardArea || !moodboardVisual || !moodboardText) return;
+
+            const categoriasSelecionadas = Object.keys(combinacaoAtual);
+            
+            if(categoriasSelecionadas.length === 0) {
+                moodboardArea.classList.add('hidden');
+                moodboardArea.classList.remove('flex');
+                window.verificarPassosCompletos();
+                return;
+            }
+
+            moodboardArea.classList.remove('hidden');
+            moodboardArea.classList.add('flex');
+            moodboardVisual.innerHTML = '';
+            moodboardText.innerHTML = '';
+
+            categoriasSelecionadas.forEach(cat => {
+                const item = combinacaoAtual[cat];
+                moodboardVisual.innerHTML += `
+                    <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                        <img src="${item.imagem}" class="w-full h-full object-cover">
+                    </div>
+                `;
+                moodboardText.innerHTML += `
+                    <li><strong class="text-gray-800">${cat}:</strong> ${item.nome}</li>
+                `;
+            });
+            
+            window.verificarPassosCompletos();
+        };
+
+        window.selecionarAcabamento = function(categoria, nome, imagem) {
+            if(combinacaoAtual[categoria] && combinacaoAtual[categoria].nome === nome) {
+                delete combinacaoAtual[categoria];
+            } else {
+                combinacaoAtual[categoria] = { nome: nome, imagem: imagem };
+            }
+            window.atualizarMoodboard();
+            const refSelect = document.getElementById('acabamentosRefSelect');
+            if(refSelect) window.renderAcabamentosPorRef(refSelect.value); 
+        };
+
+        window.limparCombinacao = function() {
+            combinacaoAtual = {};
+            window.atualizarMoodboard();
+            const refSelect = document.getElementById('acabamentosRefSelect');
+            if(refSelect) window.renderAcabamentosPorRef(refSelect.value);
+        };
+
+        window.mudarRefAcabamento = function(refId) {
+            combinacaoAtual = {}; 
+            const inputQtd = document.getElementById('inputQtdCart');
+            if(inputQtd) inputQtd.value = 1;
+            window.atualizarMoodboard();
+            window.renderAcabamentosPorRef(refId);
+        };
+
+        window.renderAcabamentosPorRef = function(refId) {
+            const acabamentosCont = document.getElementById('techAcabamentos');
+            if(!acabamentosCont) return;
+
+            acabamentosCont.innerHTML = '';
+            categoriasObrigatoriasParaRef = []; 
+            
+            const opcoesDaRef = db_opcoes_produto.filter(o => String(o['REFERÊNCIA']) === String(refId));
+
+            if(opcoesDaRef.length > 0) {
+                const row = opcoesDaRef[0]; 
+                const categoriasDeOpcoes = {}; 
+
+                const ordemStr = String(row['ORDEM_ACABAMENTOS'] || row['ORDEM'] || '').trim();
+                let ordemArray = [];
+                if (ordemStr) {
+                    ordemArray = ordemStr.split(',').map(s => {
+                        let sTrim = s.trim().toUpperCase();
+                        return sTrim === 'CLASS TEC' ? 'TECIDOS' : sTrim;
+                    });
+                }
+
+                Object.keys(row).forEach(coluna => {
+                    if(coluna !== 'REFERÊNCIA' && !coluna.includes('QUANTIDADE') && !coluna.includes('ORDEM')) {
+                        const val = String(row[coluna]).trim();
+                        if(val !== '' && val.toLowerCase() !== '(vazio)' && val !== 'null' && val !== 'undefined') {
+                            let nomeExibicao = coluna === 'CLASS TEC' ? 'TECIDOS' : coluna;
+                            categoriasDeOpcoes[nomeExibicao] = val.split(',').map(item => item.trim()).filter(item => item !== '');
+                        }
+                    }
+                });
+
+                if(Object.keys(categoriasDeOpcoes).length > 0) {
+                    
+                    const chavesOrdenadas = Object.keys(categoriasDeOpcoes).sort((a, b) => {
+                        if(ordemArray.length === 0) return 0;
+                        let idxA = ordemArray.indexOf(a.toUpperCase());
+                        let idxB = ordemArray.indexOf(b.toUpperCase());
+                        if(idxA === -1) idxA = 999;
+                        if(idxB === -1) idxB = 999;
+                        return idxA - idxB;
+                    });
+
+                    categoriasObrigatoriasParaRef = chavesOrdenadas; 
+                    let activeCategory = chavesOrdenadas.find(cat => !combinacaoAtual[cat]);
+                    let todosPassosAnterioresPreenchidos = true;
+                    let passoVisualIdx = 1;
+
+                    chavesOrdenadas.forEach((categoriaPrincipal) => {
+                        const itens = categoriasDeOpcoes[categoriaPrincipal];
+                        if(itens.length === 0) return;
+
+                        const passoLiberado = todosPassosAnterioresPreenchidos;
+                        if(!combinacaoAtual[categoriaPrincipal]) {
+                            todosPassosAnterioresPreenchidos = false; 
+                        }
+
+                        const opacityClass = passoLiberado ? 'opacity-100' : 'opacity-40 pointer-events-none select-none grayscale';
+                        const lockBadge = passoLiberado ? '' : `<span class="ml-3 text-[9px] bg-red-100 text-red-600 px-2 py-0.5 rounded normal-case font-bold shadow-sm border border-red-200"><i class="fas fa-lock mr-1"></i>Aguardando seleção anterior</span>`;
+
+                        const subGrupos = {};
+                        itens.forEach(codigoItem => {
+                            const infoAcab = db_acabamentos.find(a => String(a.CHAVE) === String(codigoItem)) || { 
+                                NOME: codigoItem, 
+                                IMAGEM: 'https://placehold.co/100x100/e2e8f0/94a3b8?text='+String(codigoItem).substring(0,3).toUpperCase(),
+                                GRUPO: 'Geral',
+                                ACRESCIMO_PERC: 0
+                            };
+                            const nomeDoGrupo = infoAcab.GRUPO && infoAcab.GRUPO.trim() !== '' ? infoAcab.GRUPO : 'Geral';
+                            if(!subGrupos[nomeDoGrupo]) subGrupos[nomeDoGrupo] = [];
+                            subGrupos[nomeDoGrupo].push(infoAcab);
+                        });
+
+                        let htmlBlock = `<div class="mb-8 transition-all duration-500 ${opacityClass}">
+                            <h5 class="text-sm font-extrabold text-gray-800 uppercase tracking-widest mb-4 border-b-2 border-gray-100 pb-2 flex items-center">
+                                <span class="bg-gray-900 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] mr-2 shadow-sm">${passoVisualIdx}</span>
+                                ${categoriaPrincipal} ${lockBadge}
+                            </h5>
+                            <div class="space-y-3">`;
+
+                        let firstGroupOpened = false;
+
+                        Object.keys(subGrupos).sort().forEach(nomeGrupo => {
+                            const itensDoGrupo = subGrupos[nomeGrupo];
+                            
+                            let isAberto = '';
+                            if (categoriaPrincipal === activeCategory && !firstGroupOpened) {
+                                isAberto = 'open';
+                                firstGroupOpened = true;
+                            }
+
+                            const icone = isAberto ? 'fa-chevron-down' : 'fa-chevron-right';
+
+                            htmlBlock += `
+                                <details class="group bg-gray-50 border border-gray-100 rounded-lg overflow-hidden" ${isAberto}>
+                                    <summary class="flex justify-between items-center text-xs font-bold text-gray-700 uppercase bg-gray-100/50 p-3 cursor-pointer select-none hover:bg-gray-200/50 transition-colors">
+                                        <div class="flex items-center">
+                                            <i class="fas ${icone} w-4 text-wood transition-transform group-open:rotate-90 mr-2"></i>
+                                            ${nomeGrupo} <span class="font-normal text-gray-400 normal-case ml-2 tracking-normal">(${itensDoGrupo.length} opções)</span>
+                                        </div>
+                                    </summary>
+                                    <div class="flex flex-wrap gap-4 p-4 bg-white">
+                            `;
+
+                            const safeCat = categoriaPrincipal.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+
+                            itensDoGrupo.forEach(infoAcab => {
+                                const safeName = infoAcab.NOME.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                                const isSelected = combinacaoAtual[categoriaPrincipal] && combinacaoAtual[categoriaPrincipal].nome === infoAcab.NOME;
+                                const ringClass = isSelected ? 'ring-4 ring-wood ring-offset-2 scale-105' : 'ring-1 ring-gray-200 group-hover/item:ring-wood group-hover/item:scale-105';
+                                const textClass = isSelected ? 'text-wood font-extrabold' : 'text-gray-600 font-medium group-hover/item:text-wood';
+                                const percBadge = (infoAcab.ACRESCIMO_PERC && parseFloat(infoAcab.ACRESCIMO_PERC) > 0) ? `<div class="absolute -top-1 -right-1 bg-gray-900 text-white text-[8px] font-bold px-1 rounded shadow-sm z-10">+${infoAcab.ACRESCIMO_PERC}%</div>` : '';
+
+                                htmlBlock += `
+                                    <div class="flex flex-col items-center w-20 group/item cursor-pointer relative" title="${infoAcab.NOME}" onclick="window.selecionarAcabamento('${safeCat}', '${safeName}', '${infoAcab.IMAGEM}')">
+                                        ${percBadge}
+                                        <div class="relative w-16 h-16 rounded-full shadow-sm overflow-hidden bg-gray-100 border-2 border-white ${ringClass} transition-all mb-2">
+                                            <img src="${infoAcab.IMAGEM}" class="w-full h-full object-cover">
+                                        </div>
+                                        <span class="text-[10px] text-center leading-tight line-clamp-2 transition-colors ${textClass}">${infoAcab.NOME}</span>
+                                    </div>
+                                `;
+                            });
+
+                            htmlBlock += `</div></details>`;
+                        });
+
+                        htmlBlock += `</div></div>`;
+                        acabamentosCont.innerHTML += htmlBlock;
+                        passoVisualIdx++;
+                    });
+
+                    document.querySelectorAll('#techAcabamentos details').forEach(detail => {
+                        detail.addEventListener('toggle', function() {
+                            const icon = this.querySelector('summary i');
+                            if(icon) {
+                                if(this.open) icon.classList.replace('fa-chevron-right', 'fa-chevron-down');
+                                else icon.classList.replace('fa-chevron-down', 'fa-chevron-right');
+                            }
+                        });
+                    });
+
+                } else { acabamentosCont.innerHTML = '<p class="text-sm text-gray-400">Nenhum acabamento específico cadastrado para esta referência.</p>'; }
+            } else { acabamentosCont.innerHTML = '<p class="text-sm text-gray-400">Nenhum acabamento específico cadastrado para esta referência.</p>'; }
+            
+            window.verificarPassosCompletos();
+        };
+
+        // ==========================================
+        // 8. ABERTURA DAS ABAS TÉCNICAS
+        // ==========================================
+        window.openTechModalTab = function(tabId) {
+            if(!linhaAtiva) return;
+            const titleEl = document.getElementById('techTitle');
+            if(titleEl) titleEl.innerText = linhaAtiva.NOME_LINHA;
+
+            const refsDaFamilia = db_referencias.filter(r => String(r.ID_LINHA) === String(linhaAtiva.ID_LINHA));
+            const idsRefsFamilia = refsDaFamilia.map(r => String(r.REFERENCIA));
+            
+            const techBody = document.getElementById('techTechTableBody');
+            if(techBody) {
+                techBody.innerHTML = '';
+                if(refsDaFamilia.length === 0) {
+                    techBody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-gray-400">Nenhuma referência encontrada.</td></tr>';
+                } else {
+                    refsDaFamilia.forEach(ref => {
+                        const tr = document.createElement('tr');
+                        const manualHref = ref.URL_MANUAL ? ref.URL_MANUAL : '#';
+                        const manualClass = ref.URL_MANUAL ? 'text-red-500 hover:text-red-700 cursor-pointer' : 'text-gray-300 pointer-events-none';
+                        const tridHref = ref.LINK_3D ? ref.LINK_3D : '#';
+                        const tridClass = ref.LINK_3D ? 'text-blue-500 hover:text-blue-700 cursor-pointer' : 'text-gray-300 pointer-events-none';
+
+                        tr.innerHTML = `
+                            <td class="py-3 pl-4 font-medium text-gray-900">${ref.REFERENCIA || '-'}</td>
+                            <td class="py-3 text-center text-gray-600">${ref.PESO_LIQ ? ref.PESO_LIQ + ' kg' : '-'}</td>
+                            <td class="py-3 text-center text-gray-600">${ref.PESO_BRUTO ? ref.PESO_BRUTO + ' kg' : '-'}</td>
+                            <td class="py-3 text-center text-gray-600">${ref.CUBAGEM ? ref.CUBAGEM + ' m³' : '-'}</td>
+                            <td class="py-3 text-center text-gray-600">${ref.VOLUMES || '-'}</td>
+                            <td class="py-3 text-center">
+                                <a href="${manualHref}" target="_blank" class="${manualClass} transition-colors inline-block" title="Baixar Manual">
+                                    <i class="fas fa-file-pdf text-xl"></i>
+                                </a>
+                            </td>
+                            <td class="py-3 text-center pr-4">
+                                <a href="${tridHref}" target="_blank" class="${tridClass} transition-colors inline-block" title="Ver Bloco 3D">
+                                    <i class="fas fa-cube text-xl"></i>
+                                </a>
+                            </td>`;
+                        techBody.appendChild(tr);
+                    });
+                }
+            }
+
+            const addInfoContainer = document.getElementById('techAdditionalInfoContainer');
+            const addInfoText = document.getElementById('techAdditionalInfoText');
+            const detalhesAdicionais = linhaAtiva.INFO_TECNICAS || linhaAtiva.DETALHES_TECNICOS || linhaAtiva.OBSERVACOES;
+
+            if (addInfoContainer && addInfoText) {
+                if (detalhesAdicionais && String(detalhesAdicionais).trim() !== '') {
+                    addInfoText.innerHTML = String(detalhesAdicionais).replace(/\n/g, '<br>');
+                    addInfoContainer.classList.remove('hidden');
+                } else {
+                    addInfoContainer.classList.add('hidden');
+                }
+            }
+
+            const thead = document.getElementById('techMatrixHead');
+            const tbodyMatriz = document.getElementById('techMatrixBody');
+            const matrixContainer = document.getElementById('techMatrixContainer');
+            const imageContainer = document.getElementById('techImageContainer');
+            
+            if(thead && tbodyMatriz) {
+                thead.innerHTML = '';
+                tbodyMatriz.innerHTML = '';
+
+                const medidasDestaFamilia = db_medidas.filter(m => idsRefsFamilia.includes(String(m.REFERENCIA)));
+                let hasValidMeasurements = false;
+                let letrasValidas = new Set();
+
+                if(medidasDestaFamilia.length > 0) {
+                    medidasDestaFamilia.forEach(row => {
+                        Object.keys(row).forEach(key => {
+                            if(key !== 'REFERENCIA') {
+                                const val = String(row[key]).trim().toLowerCase();
+                                if(val !== '' && val !== '(vazio)' && val !== 'null' && val !== 'undefined') letrasValidas.add(key);
+                            }
+                        });
+                    });
+                    if(letrasValidas.size > 0) hasValidMeasurements = true;
+                }
+
+                if(hasValidMeasurements && matrixContainer && imageContainer) {
+                    matrixContainer.classList.remove('hidden');
+                    imageContainer.className = "lg:w-1/3 p-4 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 min-h-[250px] transition-all duration-300";
+                    
+                    const letrasOrdenadas = Array.from(letrasValidas).sort();
+                    const legendas = {};
+                    if(linhaAtiva.TABELA_DIMENSOES) {
+                        linhaAtiva.TABELA_DIMENSOES.split('|').forEach(item => {
+                            const parts = item.split(':');
+                            if(parts.length === 2) legendas[parts[0].trim()] = parts[1].trim();
+                        });
+                    }
+
+                    let headerHTML = `<th class="py-3 pl-3 font-semibold rounded-tl-lg text-left w-1/4">Ref.</th>`;
+                    letrasOrdenadas.forEach(letra => {
+                        const desc = legendas[letra] || '';
+                        headerHTML += `<th class="py-3 font-semibold text-center">
+                            <span class="text-lg text-gray-900">${letra}</span>
+                            <span class="block text-[10px] text-gray-400 font-normal mt-0.5">${desc}</span>
+                        </th>`;
+                    });
+                    thead.innerHTML = headerHTML;
+
+                    refsDaFamilia.forEach(ref => {
+                        const medidaRow = medidasDestaFamilia.find(m => String(m.REFERENCIA) === String(ref.REFERENCIA));
+                        let rowHTML = `<td class="py-3 pl-3 font-medium text-gray-900 bg-white">${ref.REFERENCIA}</td>`;
+                        
+                        letrasOrdenadas.forEach(letra => {
+                            let valor = '-';
+                            if(medidaRow && medidaRow[letra]) {
+                                const valStr = String(medidaRow[letra]).trim();
+                                if(valStr.toLowerCase() !== '(vazio)' && valStr !== '') valor = valStr;
+                            }
+                            rowHTML += `<td class="py-3 text-center text-gray-600 bg-white">${valor}</td>`;
+                        });
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = rowHTML;
+                        tbodyMatriz.appendChild(tr);
+                    });
+                } else if(matrixContainer && imageContainer) {
+                    matrixContainer.classList.add('hidden');
+                    imageContainer.className = "w-full max-w-3xl mx-auto p-6 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 min-h-[350px] transition-all duration-300 shadow-inner";
+                }
+            }
+
+            const imgDim = document.getElementById('techDimImg');
+            if(imgDim) imgDim.src = linhaAtiva.IMAGEM_TECNICA || 'https://placehold.co/400x300/f3f4f6/8B5A2B?text=Sem+Croqui'; 
+
+            const refSelect = document.getElementById('acabamentosRefSelect');
+            if(refSelect) {
+                refSelect.innerHTML = '';
+                if(refsDaFamilia.length > 0) {
+                    refsDaFamilia.forEach(ref => {
+                        const opt = document.createElement('option');
+                        opt.value = ref.REFERENCIA;
+                        opt.text = `Ref. ${ref.REFERENCIA} - ${ref.DIMENSAO || ''} ${ref.FORMATO || ''}`;
+                        refSelect.appendChild(opt);
+                    });
+                    window.mudarRefAcabamento(refsDaFamilia[0].REFERENCIA);
+                } else {
+                    const opt = document.createElement('option');
+                    opt.text = "Sem referências";
+                    refSelect.appendChild(opt);
+                    const acCont = document.getElementById('techAcabamentos');
+                    if(acCont) acCont.innerHTML = '<p class="text-sm text-gray-400">Nenhum acabamento específico cadastrado.</p>';
+                }
+            }
+
+            window.switchTechTab(tabId);
+            const modal = document.getElementById('techModal');
+            if(modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => { modal.classList.remove('opacity-0', 'pointer-events-none'); }, 10);
+            }
+        };
+
+        window.closeTechModal = function() {
+            const modal = document.getElementById('techModal');
+            if(modal) {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        };
+
+        // ==========================================
+        // 9. GERADORES DE PDF - VERSÃO "SEM TELA BRANCA" E COM IMAGENS
+        // ==========================================
+        window.gerarPDF = function(event) {
+            event.preventDefault();
+            if(!linhaAtiva) return;
+
+            const btn = document.getElementById('btnGerarPDF');
+            const oldContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-3xl text-wood mb-3"></i><span class="font-bold text-gray-800">Gerando PDF...</span>';
+            btn.style.pointerEvents = 'none';
+
+            let galeriaArr = [];
+            if(linhaAtiva.IMAGEM_BASE) galeriaArr.push(linhaAtiva.IMAGEM_BASE);
+            if(linhaAtiva.GALERIA_IMAGENS) {
+                const extras = linhaAtiva.GALERIA_IMAGENS.split('|').map(u => u.trim()).filter(u => u !== '');
+                galeriaArr = [...galeriaArr, ...extras];
+            }
+            galeriaArr = [...new Set(galeriaArr)];
+            
+            const img1 = galeriaArr[0] || 'https://placehold.co/400x300/f3f4f6/8B5A2B?text=Sem+Foto';
+            const img2 = galeriaArr.length > 1 ? galeriaArr[1] : 'https://placehold.co/400x300/f3f4f6/8B5A2B?text=Sem+Foto+Adicional';
+            const imgDim = document.getElementById('techDimImg');
+            const croquiSrc = imgDim ? imgDim.src : '';
+
+            const refsDaFamilia = db_referencias.filter(r => String(r.ID_LINHA) === String(linhaAtiva.ID_LINHA));
+
+            let logisticaRows = '';
+            refsDaFamilia.forEach(ref => {
+                logisticaRows += `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px; font-weight: 600; color: #111827;">${ref.REFERENCIA || '-'}</td>
+                        <td style="padding: 10px; text-align: center; color: #4b5563;">${ref.PESO_LIQ ? ref.PESO_LIQ + ' kg' : '-'}</td>
+                        <td style="padding: 10px; text-align: center; color: #4b5563;">${ref.PESO_BRUTO ? ref.PESO_BRUTO + ' kg' : '-'}</td>
+                        <td style="padding: 10px; text-align: center; color: #4b5563;">${ref.CUBAGEM ? ref.CUBAGEM + ' m³' : '-'}</td>
+                        <td style="padding: 10px; text-align: center; color: #4b5563;">${ref.VOLUMES || '-'}</td>
+                    </tr>`;
+            });
+
+            const matCont = document.getElementById('techMatrixContainer');
+            const isMatrixHidden = matCont ? matCont.classList.contains('hidden') : true;
+            let dimensoesHTML = '';
+
+            if (!isMatrixHidden) {
+                const matrixHead = document.getElementById('techMatrixHead').innerHTML;
+                const matrixBody = document.getElementById('techMatrixBody').innerHTML;
+                dimensoesHTML = `
+                    <h2 style="font-size: 18px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 15px; border-left: 4px solid #8B5A2B; padding-left: 10px;">Dimensões e Croqui</h2>
+                    <div style="display: flex; gap: 20px; align-items: flex-start;">
+                        <div style="width: 40%; display: flex; align-items: center; justify-content: center; padding: 10px; background: #f9fafb; border-radius: 8px;">
+                             <img src="${croquiSrc}" crossorigin="anonymous" style="max-width: 100%; max-height: 220px; object-fit: contain;">
+                        </div>
+                        <div style="width: 60%;">
+                            <table style="width: 100%; text-align: left; font-size: 14px; border-collapse: collapse;">
+                                <thead style="background-color: #f3f4f6;">
+                                    <tr>${matrixHead}</tr>
+                                </thead>
+                                <tbody>
+                                    ${matrixBody}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                dimensoesHTML = `
+                    <h2 style="font-size: 18px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 15px; border-left: 4px solid #8B5A2B; padding-left: 10px;">Croqui de Dimensões</h2>
+                    <div style="display: flex; align-items: center; justify-content: center; padding: 20px; background: #f9fafb; border-radius: 8px; width: 100%; text-align: center;">
+                         <img src="${croquiSrc}" crossorigin="anonymous" style="max-width: 100%; max-height: 400px; object-fit: contain;">
+                    </div>
+                `;
+            }
+
+            const detalhesAdicionais = linhaAtiva.INFO_TECNICAS || linhaAtiva.DETALHES_TECNICOS || linhaAtiva.OBSERVACOES;
+            let detalhesExtraPDF = '';
+            if (detalhesAdicionais && String(detalhesAdicionais).trim() !== '') {
+                detalhesExtraPDF = `
+                    <div style="margin-top: 30px;">
+                        <h2 style="font-size: 18px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 10px; border-left: 4px solid #8B5A2B; padding-left: 10px;">Detalhes Adicionais</h2>
+                        <p style="font-size: 13px; color: #4b5563; line-height: 1.5; background: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; margin: 0; white-space: pre-wrap;">${String(detalhesAdicionais)}</p>
+                    </div>
+                `;
+            }
+
+            // Repare no crossorigin="anonymous" injetado nas imagens!
+            const templateStringHTML = `
+                <div style="font-family: 'Helvetica', 'Arial', sans-serif; color: #333; padding: 40px; box-sizing: border-box; width: 800px; background-color: #ffffff;">
+                    <div style="border-bottom: 3px solid #8B5A2B; padding-bottom: 15px; margin-bottom: 30px;">
+                        <h1 style="font-size: 34px; font-weight: bold; margin: 0; color: #111827; font-family: serif;">Matrezan</h1>
+                        <p style="font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; margin-top: 8px;">Ficha Técnica - ${linhaAtiva.NOME_LINHA}</p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 20px; margin-bottom: 40px; height: 260px;">
+                        <div style="width: 50%; background: #f9fafb; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px; border: 1px solid #f3f4f6;">
+                            <img src="${img1}" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <div style="width: 50%; background: #f9fafb; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px; border: 1px solid #f3f4f6;">
+                            <img src="${img2}" crossorigin="anonymous" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                    </div>
+
+                    <h2 style="font-size: 18px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 15px; border-left: 4px solid #8B5A2B; padding-left: 10px;">Informações Logísticas</h2>
+                    <table style="width: 100%; text-align: left; font-size: 14px; border-collapse: collapse; margin-bottom: 40px;">
+                        <thead style="background-color: #f3f4f6;">
+                            <tr>
+                                <th style="padding: 10px; color: #111827;">Ref.</th>
+                                <th style="padding: 10px; text-align: center; color: #111827;">Peso Líq.</th>
+                                <th style="padding: 10px; text-align: center; color: #111827;">Peso Bruto</th>
+                                <th style="padding: 10px; text-align: center; color: #111827;">Cubagem</th>
+                                <th style="padding: 10px; text-align: center; color: #111827;">Volumes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${logisticaRows}
+                        </tbody>
+                    </table>
+
+                    ${dimensoesHTML}
+                    ${detalhesExtraPDF}
+                    
+                    <div style="margin-top: 50px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                        Documento gerado eletronicamente via Catálogo Virtual Matrezan 2026. As especificações podem sofrer alterações.
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin:       [10, 0, 10, 0],
+                filename:     `Matrezan_Ficha_${linhaAtiva.NOME_LINHA.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                // Configurações críticas de CORS ativadas para buscar a imagem externa
+                html2canvas:  { scale: 2, useCORS: true, allowTaint: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Passando a string direto para o worker da biblioteca (sem criar divs escondidas)
+            html2pdf().set(opt).from(templateStringHTML).save().then(() => {
+                btn.innerHTML = oldContent;
+                btn.style.pointerEvents = 'auto';
+                window.showToast("Ficha Técnica baixada!");
+            }).catch(err => {
+                console.error(err);
+                btn.innerHTML = oldContent;
+                btn.style.pointerEvents = 'auto';
+                alert("Erro ao gerar PDF.");
+            });
+        };
+
+        window.gerarPDFOrcamento = function() {
+            if (carrinhoOrcamento.length === 0) return;
+            
+            const btn = document.getElementById('btnGerarOrcamento');
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2 text-lg"></i> Gerando Documento...';
+            btn.disabled = true;
+
+            const clienteEl = document.getElementById('clienteNome');
+            const nomeCliente = (clienteEl && clienteEl.value.trim() !== '') ? clienteEl.value.trim() : 'Cliente Não Identificado';
+            const dataHoje = new Date().toLocaleDateString('pt-BR');
+            
+            let totalGeral = 0;
+            let rowsHtml = '';
+
+            carrinhoOrcamento.forEach(item => {
+                const totalItem = item.quantidade * item.precoUnitario;
+                totalGeral += totalItem;
+
+                let comboHtml = '';
+                Object.keys(item.combinacao).forEach(cat => {
+                    comboHtml += `<div style="margin-bottom: 2px;"><strong>${cat}:</strong> ${item.combinacao[cat].nome}</div>`;
+                });
+
+                rowsHtml += `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 15px 10px; width: 80px;">
+                            <img src="${item.imagemPrincipal}" crossorigin="anonymous" style="width: 70px; height: 70px; object-fit: contain; mix-blend-mode: multiply;">
+                        </td>
+                        <td style="padding: 15px 10px;">
+                            <h4 style="margin: 0 0 5px 0; font-family: serif; font-size: 16px; color: #111827;">${item.linhaNome}</h4>
+                            <div style="font-size: 11px; color: #4b5563;">
+                                <div style="margin-bottom: 4px;"><strong style="color: #8B5A2B;">Ref: ${item.referencia}</strong></div>
+                                ${comboHtml}
+                            </div>
+                        </td>
+                        <td style="padding: 15px 10px; text-align: center; font-size: 14px; font-weight: bold; color: #374151;">
+                            ${item.quantidade}
+                        </td>
+                        <td style="padding: 15px 10px; text-align: right; font-size: 13px; color: #6b7280;">
+                            ${window.formatarMoeda(item.precoUnitario)}
+                        </td>
+                        <td style="padding: 15px 10px; text-align: right; font-size: 14px; font-weight: bold; color: #111827;">
+                            ${window.formatarMoeda(totalItem)}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const templateStringHTML = `
+                <div style="font-family: 'Helvetica', 'Arial', sans-serif; color: #333; padding: 40px; background: #fff; width: 800px; box-sizing: border-box; background-color: #ffffff;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #8B5A2B; padding-bottom: 20px; margin-bottom: 30px;">
+                        <div>
+                            <h1 style="font-family: 'Playfair Display', serif; font-size: 38px; font-weight: bold; margin: 0; color: #111827; letter-spacing: -1px;">Matrezan</h1>
+                            <p style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 3px; margin: 5px 0 0 0;">Coleção 2026</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h2 style="font-size: 24px; font-weight: bold; margin: 0; color: #8B5A2B;">ORÇAMENTO</h2>
+                            <p style="font-size: 12px; color: #6b7280; margin: 5px 0 0 0;">Data: ${dataHoje}</p>
+                        </div>
+                    </div>
+
+                    <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #f3f4f6;">
+                        <p style="margin: 0; font-size: 14px; color: #4b5563;">
+                            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; display: block; margin-bottom: 5px;">Projeto / Cliente</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #111827;">${nomeCliente}</span>
+                        </p>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                        <thead style="background-color: #f3f4f6;">
+                            <tr>
+                                <th style="padding: 12px 10px; text-align: left; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 1px; border-radius: 6px 0 0 6px;" colspan="2">Produto e Especificações</th>
+                                <th style="padding: 12px 10px; text-align: center; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 1px;">Qtd</th>
+                                <th style="padding: 12px 10px; text-align: right; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 1px;">Valor Unit.</th>
+                                <th style="padding: 12px 10px; text-align: right; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 1px; border-radius: 0 6px 6px 0;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                        <div style="width: 300px; background-color: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 14px; font-weight: bold; text-transform: uppercase; color: #4b5563;">Total Geral</span>
+                                <span style="font-size: 24px; font-weight: bold; color: #8B5A2B;">${window.formatarMoeda(totalGeral)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 60px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                        Orçamento gerado via Catálogo Virtual Matrezan. Preços e condições sujeitos a alteração sem aviso prévio.
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin:       [10, 0, 10, 0],
+                filename:     `Orcamento_Matrezan_${nomeCliente.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, allowTaint: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(templateStringHTML).save().then(() => {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+                window.showToast("PDF Gerado com Sucesso!");
+            }).catch(err => {
+                console.error(err);
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+                alert("Erro ao gerar PDF.");
+            });
+        };
+
+        // ==========================================
+        // EVENT LISTENERS DE SEGURANÇA
+        // ==========================================
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                const cartSidebar = document.getElementById('cartSidebar');
+                const techModal = document.getElementById('techModal');
+                const zoomLightbox = document.getElementById('zoomLightbox');
+                const productModal = document.getElementById('productModal');
+                
+                if (cartSidebar && !cartSidebar.classList.contains('translate-x-full')) {
+                    window.toggleCart();
+                } else if (zoomLightbox && !zoomLightbox.classList.contains('hidden')) {
+                    window.closeZoom();
+                } else if (techModal && !techModal.classList.contains('hidden')) {
+                    window.closeTechModal();
+                } else if (productModal && !productModal.classList.contains('hidden')) {
+                    window.closeModal();
+                }
+            }
+        });
+
+        window.onload = carregarCatalogo;
+    </script>
+<script>
+        // Registra o motor do App (Service Worker)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('App Matrezan pronto para instalação!', reg))
+                    .catch(err => console.log('Erro ao registrar App', err));
+            });
+        }
+    </script>
+</body>
+</html>
